@@ -1,0 +1,61 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Passport – {{ p.student_name }}</title>
+<style>
+@page{size:A4 landscape;margin:8mm}
+*{box-sizing:border-box}body{margin:0;font:10.5px/1.35 Arial,Helvetica,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hd{display:grid;grid-template-columns:1.1fr 1.4fr 1.3fr .6fr;gap:10px;align-items:center;border-bottom:2px solid #0f5132;padding-bottom:6px;margin-bottom:6px}
+.hd .sch{font-weight:700;color:#0f5132;font-size:14px}.hd .pj{text-align:center}.hd .pj b{font-size:22px}.hd .pp{font-size:17px;font-weight:800;text-align:center}
+.hd .sy{border:1px solid #888;border-radius:4px;padding:4px 8px;text-align:center}
+h2{margin:6px 0 0;background:#0f5132;color:#fff;font-size:11px;padding:3px 8px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #c8d3cc;padding:3px 6px;vertical-align:top;text-align:left}
+th{background:#dbe8df;font-weight:700}.lb{background:#eff4f0;width:15%;font-weight:600}
+.ck{font-size:12px}.pre{white-space:pre-wrap}.c{text-align:center}
+.lv{font-weight:700}.lv-beginning{color:#c00}.lv-developing{color:#c26a00}.lv-approaching{color:#8a6d00}.lv-proficient{color:#0a8a2a}.lv-advanced{color:#0d4fa6}
+.dec{display:flex;gap:18px;align-items:center;padding:4px 6px;border:1px solid #c8d3cc}
+.sig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:30px;margin-top:22px;text-align:center}
+.sig div{border-top:1px solid #111;padding-top:3px}.sig small{display:block}
+.goal{margin-top:8px;text-align:center;font-weight:700;color:#0f5132;letter-spacing:.5px}
+.bar{position:fixed;top:0;left:0;right:0;background:#0f5132;color:#fff;padding:8px 16px;display:flex;gap:12px;align-items:center}
+.bar button,.bar a{background:#e3a82b;border:0;border-radius:16px;padding:6px 16px;font-weight:700;cursor:pointer;color:#2b1f00;text-decoration:none}
+body{padding-top:44px}@media print{.bar{display:none}body{padding-top:0}}
+</style></head><body>
+<div class="bar"><span style="flex:1">Choose “Save as PDF” as the destination in the print dialog.</span><button onclick="print()">Print / Save as PDF</button><a href="/">Back</a></div>
+{% macro box(on) %}<span class="ck">{{ '☑' if on else '☐' }}</span>{% endmacro %}
+{% macro lvl(x) %}{% if x %}<span class="lv lv-{{ x.split(' ')[0]|lower }}">{{ x }}</span>{% endif %}{% endmacro %}
+<div class="hd"><div class="sch">FEU ALABANG<br>SENIOR HIGH SCHOOL</div>
+ <div class="pj"><b>Project SALO</b><br><b style="font-size:10px">No Student Left Behind</b><br></div>
+ <div class="pp">LEARNING RECOVERY PASSPORT<div style="font-size:10px;font-weight:400"></div></div>
+ <div class="sy"><b>SY {{ school_year }}</b><br>{{ box(grade=='Grade 11') }} Grade 11 &nbsp;{{ box(grade=='Grade 12') }} Grade 12</div></div>
+
+<h2>A. STUDENT INFORMATION</h2>
+<table><tr><td class="lb">Name (Student No.)</td><td>{{ p.student_name }} ({{ p.student_no }})</td><td class="lb">Semester</td><td>{{ p.semester or '' }}</td>
+ <td rowspan="5" style="width:24%"><b>Reason for referral</b><br>{% for r in reasons %}{{ box(p.referral_reason==r) }} {{ r }}<br>{% endfor %}</td></tr>
+ <tr><td class="lb">Grade level &amp; section</td><td>{{ p.grade_section or '' }}</td><td class="lb">Subject</td><td>{{ p.subject or '' }}</td></tr>
+ <tr><td class="lb">Pathway</td><td>{{ p.pathway or '' }}</td><td class="lb">Subject teacher</td><td>{{ p.subject_teacher or '' }}</td></tr>
+ <tr><td class="lb">Adviser</td><td>{{ p.adviser or '' }}</td><td class="lb">Date identified</td><td>{{ p.date_identified|fdate }}</td></tr></table>
+
+<h2>B. IDENTIFIED COMPETENCY GAP</h2>
+<table><tr><th>Most Essential Learning Competency (MELC) / Topic</th><th>Manifested Difficulty / Learning Gap</th><th>Target Learning Outcome</th></tr>
+ <tr><td class="pre">{{ p.melc or '' }}</td><td class="pre">{{ p.gap or '' }}</td><td class="pre">{{ p.target or '' }}</td></tr></table>
+
+{% macro assess(k) %}<table><tr><th>Type of Assessment</th><th>Date</th><th>Score</th><th>Proficiency Level</th><th>Remarks</th></tr>
+ <tr><td>{{ p[k~'_type'] or '' }}</td><td>{{ p[k~'_date']|fdate }}</td>
+ <td class="c"><b>{% if p[k~'_pct'] is not none %}{{ p[k~'_score']|num }} / {{ p[k~'_total']|num }}<br>({{ p[k~'_pct']|num }}%){% endif %}</b></td>
+ <td class="c">{{ lvl(p[k~'_level']) }}</td><td class="pre">{{ p[k~'_remarks'] or '' }}</td></tr></table>{% endmacro %}
+<h2>C. BASELINE ASSESSMENT</h2>{{ assess('b') }}
+
+<h2>D. SUPPORT DELIVERED (Friday iCARE and Other Interventions)</h2>
+<table><tr><th>Date</th><th>Type of Support</th><th>Topic / Focus</th><th>Facilitated by</th><th>Mode</th><th>Attendance / Completion</th></tr>
+{% for s in p.supports %}<tr><td>{{ s.date|fdate }}</td><td>{{ s.type or '' }}</td><td>{{ s.topic or '' }}</td><td>{{ s.facilitated_by or '' }}</td><td>{{ s.mode or '' }}</td><td>{{ box(s.completed) }} {{ 'Completed' if s.completed else 'Not yet' }}</td></tr>
+{% else %}<tr><td colspan="6" class="c">No support sessions recorded.</td></tr>{% endfor %}</table>
+
+<h2>E. FOLLOW-UP ASSESSMENT</h2>{{ assess('f') }}
+
+<h2>F. TEACHER DECISION / NEXT STEPS</h2>
+<table><tr><td style="width:55%"><div class="dec">{% for k,v in decisions.items() %}<span>{{ box(p.decision==k) }} {{ v }}</span>{% endfor %}</div></td>
+ <td><b>Teacher's Remarks</b><br><span class="pre">{{ p.teacher_remarks or '' }}</span></td></tr></table>
+
+<div class="sig"><div><b>{{ p.subject_teacher or '' }}</b><small>Subject Teacher</small><small>Date: ____________</small></div>
+ <div><b>{{ p.adviser or '' }}</b><small>Class Adviser</small><small>Date: ____________</small></div>
+ <div><small style="text-align:left">Noted by:</small><b>{{ director }}</b><small>Senior Director, SHS</small><small>Date: ____________</small></div></div>
+{% if request.args.get('auto') %}<script>addEventListener('load',()=>setTimeout(print,400))</script>{% endif %}
+</body></html>

@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Learning Recovery Passports · Project SALO 360°</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
+<header class="bar"><h1>Project SALO<small>FEU Alabang Senior High School</small></h1></header>
+<main>
+<div class="toolbar">
+  <label class="field"><input id="q" type="search" placeholder="Student, subject or student number"><span>Search passports</span></label>
+</div>
+<div class="card">
+{% if rows %}
+<table class="list"><thead><tr><th>Student</th><th>Subject</th><th>Grade &amp; pathway</th><th>Identified</th><th>Status</th><th></th></tr></thead><tbody id="rows">
+{% for r in rows %}
+<tr data-id="{{ r.id }}" data-s="{{ (r.name ~ ' ' ~ r.student_no ~ ' ' ~ (r.subject or ''))|lower }}">
+ <td><b>{{ r.name }}</b><br><small>{{ r.student_no }}</small></td><td>{{ r.subject or '—' }}</td>
+ <td>{{ r.grade_section or '—' }}<br><small>{{ r.pathway or '' }}</small></td><td>{{ r.date_identified|fdate or '—' }}</td>
+ <td>{% if r.decision %}<span class="chip lv-{{ 'proficient' if r.decision=='recovered' else 'developing' }}">{{ decisions[r.decision] }}</span>{% else %}<span class="chip">In progress</span>{% endif %}</td>
+ <td class="acts"><a class="btn tonal" target="_blank" href="{{ url_for('print_passport', pid=r.id) }}?auto=1">Print PDF</a>
+ <a class="btn text" href="{{ url_for('edit_passport', pid=r.id) }}">Edit</a><button class="btn danger" data-del>Delete</button></td></tr>
+{% endfor %}</tbody></table>
+{% else %}<div class="empty"><h2>No passports yet</h2><p>Create the first Learning Recovery Passport to start tracking a student's progress.</p></div>{% endif %}
+</div></main>
+<a class="fab" href="{{ url_for('new_passport') }}">+ New passport</a><div id="snack"></div>
+<script>
+const q=document.getElementById('q');
+q&&q.addEventListener('input',()=>document.querySelectorAll('#rows tr').forEach(r=>r.hidden=!r.dataset.s.includes(q.value.toLowerCase())));
+document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+ const tr=b.closest('tr');if(!confirm('Delete this passport permanently?'))return;
+ await fetch('/api/passports/'+tr.dataset.id,{method:'DELETE'});tr.remove();});
+</script></body></html>
